@@ -5,43 +5,10 @@ import { ResultsTable } from "@/components/ResultsTable";
 import { Header } from "@/components/Header";
 import { InfoSection } from "@/components/InfoSection";
 import { mockCompareAPI } from "./api/compare";
+import { CompareResponse } from "@/lib/marketplaces/types";
 
-export interface ProductResult {
-  marketplace: string;
-  productUrl: string;
-  productTitle: string;
-  variant?: string;
-  listedPrice: number;
-  shippingFee: number;
-  effectivePrice: number;
-  currency: 'INR';
-  inStock: boolean;
-  offerNotes: string[];
-  deliveryEta?: string;
-  matchConfidence: number;
-  lastCheckedISO: string;
-}
-
-export interface CompareResponse {
-  signature: {
-    sourceSite: string;
-    inputUrl: string;
-    canonicalName: string;
-    model?: string;
-    asin?: string;
-    gtin?: string;
-    variant: Record<string, string>;
-  };
-  results: ProductResult[];
-  bestBuy?: {
-    marketplace: string;
-    link: string;
-    effectivePrice: number;
-    rationale: string[];
-  };
-  savedToSheet: boolean;
-  sheetRowIds?: string[];
-}
+// Using types from the marketplace system
+// These interfaces are now imported from @/lib/marketplaces/types
 
 const Index = () => {
   const { toast } = useToast();

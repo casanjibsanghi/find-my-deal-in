@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ExternalLink, Crown, Check, X } from "lucide-react";
-import { CompareResponse } from "@/pages/Index";
+import { CompareResponse } from "@/lib/marketplaces/types";
 
 interface ResultsTableProps {
   results: CompareResponse;
@@ -21,15 +21,22 @@ export const ResultsTable = ({ results }: ResultsTableProps) => {
   };
 
   const getMarketplaceLogo = (marketplace: string) => {
-    // In a real app, you'd have actual logos
+    // Enhanced marketplace colors based on brand colors
     const colors = {
       'amazon': 'bg-orange-500',
       'flipkart': 'bg-blue-500',
+      'meesho': 'bg-pink-500',
+      'zepto': 'bg-purple-500',
+      'bb daily': 'bg-green-500',
+      'instamart': 'bg-orange-600',
+      'myntra': 'bg-pink-600',
+      'nykaa': 'bg-pink-500',
       'croma': 'bg-red-500',
-      'reliance': 'bg-purple-500',
-      'tata': 'bg-green-500',
+      'reliance': 'bg-purple-600',
+      'tata': 'bg-green-600',
     };
-    return colors[marketplace.toLowerCase() as keyof typeof colors] || 'bg-gray-500';
+    const marketplaceKey = marketplace.toLowerCase() as keyof typeof colors;
+    return colors[marketplaceKey] || 'bg-gray-500';
   };
 
   return (

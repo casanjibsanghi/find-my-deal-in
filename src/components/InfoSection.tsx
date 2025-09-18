@@ -32,8 +32,8 @@ export const InfoSection = () => {
               </AccordionTrigger>
               <AccordionContent className="text-muted-foreground space-y-2">
                 <p>
-                  We search across Amazon.in, Flipkart, Croma, Reliance Digital, Tata CLiQ, 
-                  Vijay Sales, Apple India, and Samsung India.
+                  We search across Amazon, Flipkart, Meesho, Zepto, BB Daily, Instamart, 
+                  Myntra, Nykaa, Croma, Reliance Digital, and other major Indian marketplaces.
                 </p>
                 <p>
                   Product matching uses ASIN/model numbers for highest accuracy, falling back to 

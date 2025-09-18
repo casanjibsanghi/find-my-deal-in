@@ -31,7 +31,7 @@ export const SearchForm = ({ onSearch, loading }: SearchFormProps) => {
             <div className="flex-1">
               <Input
                 type="url"
-                placeholder="Paste product URL from Amazon, Flipkart, Croma..."
+                placeholder="Paste product URL from Amazon, Flipkart, Meesho, Zepto, Myntra, Nykaa..."
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
                 className="h-12 text-lg"

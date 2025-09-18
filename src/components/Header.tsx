@@ -28,10 +28,13 @@ export const Header = () => {
         </p>
         
         <div className="flex flex-wrap justify-center gap-3 mt-8">
-          {['Amazon', 'Flipkart', 'Croma', 'Reliance Digital', 'Tata CLiQ'].map((marketplace) => (
+          {[
+            'Amazon', 'Flipkart', 'Meesho', 'Zepto', 'BB Daily', 
+            'Instamart', 'Myntra', 'Nykaa', 'Croma', 'Reliance Digital'
+          ].map((marketplace) => (
             <span
               key={marketplace}
-              className="px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full text-sm text-white border border-white/20"
+              className="px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full text-sm text-white border border-white/20 hover:bg-white/20 transition-smooth"
             >
               {marketplace}
             </span>
