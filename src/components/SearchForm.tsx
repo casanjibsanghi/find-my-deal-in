@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { Search, Loader2 } from "lucide-react";
+import { Search, Loader2, Sparkles } from "lucide-react";
 
 interface SearchFormProps {
   onSearch: (url: string) => void;
@@ -31,7 +31,7 @@ export const SearchForm = ({ onSearch, loading }: SearchFormProps) => {
             <div className="flex-1">
               <Input
                 type="url"
-                placeholder="Paste product URL from Amazon, Flipkart, Meesho, Zepto, Myntra, Nykaa..."
+                placeholder="Paste ANY product URL - AI will identify it automatically"
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
                 className="h-12 text-lg"
@@ -47,7 +47,7 @@ export const SearchForm = ({ onSearch, loading }: SearchFormProps) => {
               {loading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Comparing...
+                  AI Analyzing...
                 </>
               ) : (
                 <>
@@ -56,6 +56,20 @@ export const SearchForm = ({ onSearch, loading }: SearchFormProps) => {
                 </>
               )}
             </Button>
+          </div>
+          
+          <div className="text-center space-y-2">
+            <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+              <Sparkles className="h-4 w-4 text-yellow-500" />
+              <span>AI-powered product detection works with ANY marketplace</span>
+            </div>
+            <div className="flex items-center justify-center gap-4 text-xs text-muted-foreground">
+              <span>📱 Electronics</span>
+              <span>👕 Fashion</span>  
+              <span>💄 Beauty</span>
+              <span>🛒 Grocery</span>
+              <span>🏠 Home</span>
+            </div>
           </div>
         </form>
         
@@ -66,7 +80,8 @@ export const SearchForm = ({ onSearch, loading }: SearchFormProps) => {
             disabled={loading}
             className="text-muted-foreground hover:text-foreground"
           >
-            Try sample product
+            <Sparkles className="mr-2 h-4 w-4" />
+            Try AI with sample iPhone URL
           </Button>
         </div>
       </CardContent>

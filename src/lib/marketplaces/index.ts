@@ -7,6 +7,7 @@ import { BBDailyAdapter } from './bbdaily';
 import { InstamartAdapter } from './instamart';
 import { MyntraAdapter } from './myntra';
 import { NykaaAdapter } from './nykaa';
+import { extractProductInfoWithAI, fetchProductPage, normalizeProductName, isProductUrl, ProductInfo } from '../ai/gemini';
 
 // Create marketplace registry mapping to adapter instances
 const marketplaceRegistry: MarketplaceRegistry = {
@@ -29,55 +30,85 @@ export type { ProductSignature, OfferResult, CompareResponse } from './types';
  */
 export const extractProductSignature = async (url: string): Promise<ProductSignature | null> => {
   const lower = url.toLowerCase();
-  let adapter: MarketplaceAdapter | null = null;
   let sourceSite = 'unknown';
   
-  if (lower.includes('amazon.')) {
-    adapter = marketplaceRegistry.amazon;
-    sourceSite = 'amazon';
-  } else if (lower.includes('flipkart.')) {
-    adapter = marketplaceRegistry.flipkart;
-    sourceSite = 'flipkart';
-  } else if (lower.includes('meesho.')) {
-    adapter = marketplaceRegistry.meesho;
-    sourceSite = 'meesho';
-  } else if (lower.includes('zepto')) {
-    adapter = marketplaceRegistry.zepto;
-    sourceSite = 'zepto';
-  } else if (lower.includes('bigbasket') || lower.includes('bbdaily')) {
-    adapter = marketplaceRegistry.bbdaily;
-    sourceSite = 'bbdaily';
-  } else if (lower.includes('instamart')) {
-    adapter = marketplaceRegistry.instamart;
-    sourceSite = 'instamart';
-  } else if (lower.includes('myntra.')) {
-    adapter = marketplaceRegistry.myntra;
-    sourceSite = 'myntra';
-  } else if (lower.includes('nykaa.')) {
-    adapter = marketplaceRegistry.nykaa;
-    sourceSite = 'nykaa';
+  // Determine source marketplace
+  if (lower.includes('amazon.')) sourceSite = 'amazon';
+  else if (lower.includes('flipkart.')) sourceSite = 'flipkart';
+  else if (lower.includes('meesho.')) sourceSite = 'meesho';
+  else if (lower.includes('zepto')) sourceSite = 'zepto';
+  else if (lower.includes('bigbasket') || lower.includes('bbdaily')) sourceSite = 'bbdaily';
+  else if (lower.includes('instamart') || lower.includes('swiggy')) sourceSite = 'instamart';
+  else if (lower.includes('myntra.')) sourceSite = 'myntra';
+  else if (lower.includes('nykaa.')) sourceSite = 'nykaa';
+  else if (lower.includes('croma.')) sourceSite = 'croma';
+  else if (lower.includes('reliancedigital.')) sourceSite = 'reliance';
+  else if (lower.includes('tatacliq.')) sourceSite = 'tatacliq';
+  else if (lower.includes('vijaysales.')) sourceSite = 'vijaysales';
+
+  try {
+    // Check if URL looks like a product page
+    if (!isProductUrl(url)) {
+      console.warn('URL does not appear to be a product page:', url);
+    }
+
+    // Fetch product page content
+    console.log('Fetching product page:', url);
+    const htmlContent = await fetchProductPage(url);
+    
+    if (!htmlContent) {
+      throw new Error('Failed to fetch product page content');
+    }
+
+    // Extract product info using Gemini AI
+    console.log('Extracting product info with AI...');
+    const productInfo = await extractProductInfoWithAI(htmlContent, url);
+    
+    if (!productInfo) {
+      throw new Error('Failed to extract product information with AI');
+    }
+
+    // Convert AI-extracted info to ProductSignature
+    const signature: ProductSignature = {
+      sourceSite,
+      inputUrl: url,
+      canonicalName: normalizeProductName(productInfo.name),
+      brand: productInfo.brand || extractBrandFromName(productInfo.name),
+      model: productInfo.model,
+      asin: productInfo.asin || parseAsinFromUrl(url),
+      gtin: productInfo.gtin,
+      variant: {
+        color: productInfo.color,
+        size: productInfo.size,
+        capacity: productInfo.capacity,
+        ram: productInfo.ram,
+      },
+      category: productInfo.category,
+      originalPrice: productInfo.price,
+      currency: productInfo.currency || 'INR',
+    };
+
+    console.log('Extracted product signature:', signature);
+    return signature;
+
+  } catch (error) {
+    console.error('AI extraction failed, falling back to basic extraction:', error);
+    
+    // Fallback to basic extraction
+    const canonicalName = deriveCanonicalNameFromUrl(url) || extractProductNameFromUrl(url) || 'Unknown Product';
+    const brand = extractBrandFromName(canonicalName);
+    const asin = parseAsinFromUrl(url);
+    const variant = parseVariantFromCanonicalName(canonicalName);
+    
+    return {
+      sourceSite,
+      inputUrl: url,
+      canonicalName,
+      brand,
+      asin,
+      variant,
+    };
   }
-  
-  // Use adapter-specific extraction if available
-  if (adapter && typeof adapter.extractSignature === 'function') {
-    const sig = await adapter.extractSignature(url);
-    if (sig) return sig;
-  }
-  
-  // Enhanced fallback signature extraction
-  const canonicalName = deriveCanonicalNameFromUrl(url) || extractProductNameFromUrl(url) || 'Unknown Product';
-  const brand = extractBrandFromName(canonicalName);
-  const asin = parseAsinFromUrl(url);
-  const variant = parseVariantFromCanonicalName(canonicalName);
-  
-  return {
-    sourceSite,
-    inputUrl: url,
-    canonicalName,
-    brand,
-    asin,
-    variant,
-  };
 };
 
 /**
@@ -268,14 +299,17 @@ export const compareAcrossMarketplaces = async (inputUrl: string): Promise<Compa
     const asin = parseAsinFromUrl(inputUrl);
     if (asin) signature.asin = asin;
   }
-  // Derive basic variant details from canonicalName if none provided
+  // Enhance signature with additional data if missing
   if (!signature.variant || Object.keys(signature.variant).length === 0) {
     signature.variant = parseVariantFromCanonicalName(signature.canonicalName);
   }
-  // Guess a brand from the first word of the canonical name, if brand missing
   if (!signature.brand && signature.canonicalName) {
-    const first = signature.canonicalName.split(' ')[0];
-    if (first) signature.brand = first;
+    signature.brand = extractBrandFromName(signature.canonicalName);
+  }
+  
+  // Use AI-extracted original price as baseline for comparison
+  if (signature.originalPrice) {
+    console.log(`Using AI-extracted price as baseline: ${signature.currency} ${signature.originalPrice}`);
   }
   const results: OfferResult[] = [];
   const allMarketplaces = Object.values(marketplaceRegistry);

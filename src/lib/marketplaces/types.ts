@@ -7,11 +7,15 @@ export interface ProductSignature {
   gtin?: string;
   mpn?: string;
   brand?: string;
+  category?: string;
+  originalPrice?: number;
+  currency?: string;
   variant: {
     color?: string;
     capacity?: string;
     size?: string;
     year?: string;
+    ram?: string;
     [key: string]: string | undefined;
   };
 }
