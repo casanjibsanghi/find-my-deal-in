@@ -83,16 +83,62 @@ export class MyntraAdapter implements MarketplaceAdapter {
 
   private generateRealisticPrice(signature: ProductSignature): number {
     const name = signature.canonicalName.toLowerCase();
+    const brand = signature.brand?.toLowerCase() || '';
     
-    if (name.includes('shirt') || name.includes('t-shirt')) return 800;
-    if (name.includes('jeans') || name.includes('pants')) return 1200;
-    if (name.includes('dress')) return 1500;
-    if (name.includes('shoes') || name.includes('sneakers')) return 2500;
-    if (name.includes('watch')) return 3500;
-    if (name.includes('bag') || name.includes('handbag')) return 1800;
-    if (name.includes('jacket') || name.includes('hoodie')) return 2200;
+    // Brand-based pricing for fashion
+    const isPremium = ['nike', 'adidas', 'puma', 'levis', 'tommy', 'calvin klein', 'zara', 'h&m'].some(b => brand.includes(b));
+    const isLuxury = ['gucci', 'prada', 'versace', 'armani', 'hugo boss'].some(b => brand.includes(b));
     
-    return 1000;
+    // T-shirts and Shirts
+    if (name.includes('shirt') || name.includes('t-shirt') || name.includes('tshirt')) {
+      if (isLuxury) return 4999;
+      if (isPremium) return 1999;
+      if (brand.includes('roadster') || brand.includes('hrx')) return 699;
+      return 899;
+    }
+    
+    // Bottoms
+    if (name.includes('jeans') || name.includes('pants') || name.includes('trousers')) {
+      if (isLuxury) return 12999;
+      if (isPremium || brand.includes('levis')) return 3999;
+      return 1599;
+    }
+    
+    // Dresses and Ethnic
+    if (name.includes('dress')) {
+      if (isLuxury) return 15999;
+      if (isPremium) return 3999;
+      return 1899;
+    }
+    if (name.includes('kurti') || name.includes('kurta')) return 999;
+    if (name.includes('saree')) return 1499;
+    
+    // Footwear
+    if (name.includes('shoes') || name.includes('sneakers')) {
+      if (brand.includes('nike') || brand.includes('adidas')) return 7999;
+      if (brand.includes('puma') || brand.includes('reebok')) return 4999;
+      return 2499;
+    }
+    if (name.includes('sandals') || name.includes('slippers')) return 899;
+    
+    // Accessories
+    if (name.includes('watch')) {
+      if (brand.includes('fossil') || brand.includes('tommy')) return 8999;
+      if (brand.includes('titan') || brand.includes('casio')) return 3999;
+      return 1999;
+    }
+    if (name.includes('bag') || name.includes('handbag') || name.includes('backpack')) {
+      if (isPremium) return 4999;
+      return 1899;
+    }
+    
+    // Winter wear
+    if (name.includes('jacket') || name.includes('hoodie') || name.includes('sweater')) {
+      if (isPremium) return 5999;
+      return 2199;
+    }
+    
+    return 1299; // Default fashion price
   }
 
   private formatVariant(variant: Record<string, string | undefined>): string {

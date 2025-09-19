@@ -93,16 +93,60 @@ export class AmazonAdapter implements MarketplaceAdapter {
   }
 
   private generateRealisticPrice(signature: ProductSignature): number {
-    // Generate realistic prices based on product type
     const name = signature.canonicalName.toLowerCase();
+    const brand = signature.brand?.toLowerCase() || '';
     
-    if (name.includes('iphone') || name.includes('samsung galaxy s')) return 45000;
-    if (name.includes('laptop') || name.includes('macbook')) return 75000;
-    if (name.includes('headphone') || name.includes('earbuds')) return 8000;
-    if (name.includes('watch')) return 25000;
-    if (name.includes('tablet') || name.includes('ipad')) return 35000;
+    // Smartphones with brand-specific pricing
+    if (name.includes('iphone')) {
+      if (name.includes('15') || name.includes('pro')) return 79900;
+      if (name.includes('14')) return 69900;
+      if (name.includes('13')) return 59900;
+      return 49900;
+    }
+    if (name.includes('samsung galaxy s24')) return 74999;
+    if (name.includes('samsung galaxy s23')) return 64999;
+    if (name.includes('samsung galaxy')) return 54999;
+    if (name.includes('oneplus') && name.includes('12')) return 64999;
+    if (name.includes('oneplus')) return 39999;
+    if (name.includes('xiaomi') || name.includes('redmi')) return 24999;
+    if (name.includes('oppo') || name.includes('vivo')) return 29999;
     
-    return 15000; // Default price
+    // Laptops with capacity/brand variations
+    if (name.includes('macbook')) {
+      if (name.includes('pro')) return 199900;
+      if (name.includes('air')) return 114900;
+      return 99900;
+    }
+    if (name.includes('laptop')) {
+      if (brand.includes('dell') || brand.includes('hp')) return 65000;
+      if (brand.includes('lenovo')) return 58000;
+      if (brand.includes('asus')) return 62000;
+      return 55000;
+    }
+    
+    // Audio devices
+    if (name.includes('airpods')) return 24900;
+    if (name.includes('headphone') || name.includes('earbuds')) {
+      if (brand.includes('sony') || brand.includes('bose')) return 15999;
+      if (brand.includes('boat') || brand.includes('noise')) return 3999;
+      return 7999;
+    }
+    
+    // Watches
+    if (name.includes('apple watch')) return 41900;
+    if (name.includes('samsung galaxy watch')) return 32999;
+    if (name.includes('watch')) return 18999;
+    
+    // Tablets
+    if (name.includes('ipad')) {
+      if (name.includes('pro')) return 81900;
+      if (name.includes('air')) return 59900;
+      return 39900;
+    }
+    if (name.includes('tablet')) return 29999;
+    
+    // Default electronics price
+    return 15999;
   }
 
   private formatVariant(variant: Record<string, string | undefined>): string {

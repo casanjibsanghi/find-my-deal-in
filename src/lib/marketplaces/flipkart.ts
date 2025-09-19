@@ -68,14 +68,58 @@ export class FlipkartAdapter implements MarketplaceAdapter {
 
   private generateRealisticPrice(signature: ProductSignature): number {
     const name = signature.canonicalName.toLowerCase();
+    const brand = signature.brand?.toLowerCase() || '';
     
-    if (name.includes('iphone') || name.includes('samsung galaxy s')) return 44000;
-    if (name.includes('laptop') || name.includes('macbook')) return 73000;
-    if (name.includes('headphone') || name.includes('earbuds')) return 7500;
-    if (name.includes('watch')) return 24000;
-    if (name.includes('tablet') || name.includes('ipad')) return 34000;
+    // Smartphones - slightly lower than Amazon
+    if (name.includes('iphone')) {
+      if (name.includes('15') || name.includes('pro')) return 77900;
+      if (name.includes('14')) return 67900;
+      if (name.includes('13')) return 57900;
+      return 47900;
+    }
+    if (name.includes('samsung galaxy s24')) return 72999;
+    if (name.includes('samsung galaxy s23')) return 62999;
+    if (name.includes('samsung galaxy')) return 52999;
+    if (name.includes('oneplus') && name.includes('12')) return 62999;
+    if (name.includes('oneplus')) return 37999;
+    if (name.includes('xiaomi') || name.includes('redmi')) return 22999;
+    if (name.includes('oppo') || name.includes('vivo')) return 27999;
     
-    return 14500;
+    // Laptops
+    if (name.includes('macbook')) {
+      if (name.includes('pro')) return 195900;
+      if (name.includes('air')) return 112900;
+      return 97900;
+    }
+    if (name.includes('laptop')) {
+      if (brand.includes('dell') || brand.includes('hp')) return 63000;
+      if (brand.includes('lenovo')) return 56000;
+      if (brand.includes('asus')) return 60000;
+      return 53000;
+    }
+    
+    // Audio
+    if (name.includes('airpods')) return 23900;
+    if (name.includes('headphone') || name.includes('earbuds')) {
+      if (brand.includes('sony') || brand.includes('bose')) return 14999;
+      if (brand.includes('boat') || brand.includes('noise')) return 3499;
+      return 7499;
+    }
+    
+    // Watches
+    if (name.includes('apple watch')) return 40900;
+    if (name.includes('samsung galaxy watch')) return 31999;
+    if (name.includes('watch')) return 17999;
+    
+    // Tablets
+    if (name.includes('ipad')) {
+      if (name.includes('pro')) return 79900;
+      if (name.includes('air')) return 57900;
+      return 37900;
+    }
+    if (name.includes('tablet')) return 28999;
+    
+    return 14999;
   }
 
   private formatVariant(variant: Record<string, string | undefined>): string {

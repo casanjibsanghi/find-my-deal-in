@@ -61,15 +61,34 @@ export class MeeshoAdapter implements MarketplaceAdapter {
 
   private generateRealisticPrice(signature: ProductSignature): number {
     const name = signature.canonicalName.toLowerCase();
+    const brand = signature.brand?.toLowerCase() || '';
     
-    // Meesho typically has lower prices due to marketplace model
-    if (name.includes('iphone') || name.includes('samsung galaxy s')) return 42000;
-    if (name.includes('laptop') || name.includes('macbook')) return 70000;
-    if (name.includes('headphone') || name.includes('earbuds')) return 6500;
-    if (name.includes('watch')) return 22000;
-    if (name.includes('tablet') || name.includes('ipad')) return 32000;
+    // Meesho focuses on fashion, home, and budget electronics
+    // Electronics are typically refurbished or unbranded variants
+    if (name.includes('iphone') || name.includes('samsung galaxy s')) return 35000; // Likely refurbished
+    if (name.includes('laptop') || name.includes('macbook')) return 45000; // Budget laptops
+    if (name.includes('headphone') || name.includes('earbuds')) {
+      if (brand.includes('boat') || brand.includes('noise')) return 1999;
+      return 2999; // Mostly unbranded
+    }
+    if (name.includes('watch')) return 1499; // Fashion watches, not smartwatches
+    if (name.includes('tablet')) return 12999;
     
-    return 13000;
+    // Fashion items (Meesho's strength)
+    if (name.includes('shirt') || name.includes('t-shirt') || name.includes('tshirt')) return 299;
+    if (name.includes('jeans') || name.includes('pants')) return 499;
+    if (name.includes('dress') || name.includes('kurti')) return 399;
+    if (name.includes('saree')) return 599;
+    if (name.includes('shoes') || name.includes('sandals')) return 449;
+    if (name.includes('bag') || name.includes('handbag')) return 349;
+    if (name.includes('jewelry') || name.includes('earrings')) return 199;
+    
+    // Home & Kitchen
+    if (name.includes('bedsheet') || name.includes('pillow')) return 299;
+    if (name.includes('curtain')) return 399;
+    if (name.includes('kitchen') || name.includes('utensil')) return 249;
+    
+    return 399; // Default for fashion/home items
   }
 
   private formatVariant(variant: Record<string, string | undefined>): string {

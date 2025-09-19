@@ -30,25 +30,53 @@ export type { ProductSignature, OfferResult, CompareResponse } from './types';
 export const extractProductSignature = async (url: string): Promise<ProductSignature | null> => {
   const lower = url.toLowerCase();
   let adapter: MarketplaceAdapter | null = null;
-  if (lower.includes('amazon.')) adapter = marketplaceRegistry.amazon;
-  else if (lower.includes('flipkart.')) adapter = marketplaceRegistry.flipkart;
-  else if (lower.includes('meesho.')) adapter = marketplaceRegistry.meesho;
-  else if (lower.includes('zepto')) adapter = marketplaceRegistry.zepto;
-  else if (lower.includes('bigbasket') || lower.includes('bbdaily')) adapter = marketplaceRegistry.bbdaily;
-  else if (lower.includes('instamart')) adapter = marketplaceRegistry.instamart;
-  else if (lower.includes('myntra.')) adapter = marketplaceRegistry.myntra;
-  else if (lower.includes('nykaa.')) adapter = marketplaceRegistry.nykaa;
+  let sourceSite = 'unknown';
+  
+  if (lower.includes('amazon.')) {
+    adapter = marketplaceRegistry.amazon;
+    sourceSite = 'amazon';
+  } else if (lower.includes('flipkart.')) {
+    adapter = marketplaceRegistry.flipkart;
+    sourceSite = 'flipkart';
+  } else if (lower.includes('meesho.')) {
+    adapter = marketplaceRegistry.meesho;
+    sourceSite = 'meesho';
+  } else if (lower.includes('zepto')) {
+    adapter = marketplaceRegistry.zepto;
+    sourceSite = 'zepto';
+  } else if (lower.includes('bigbasket') || lower.includes('bbdaily')) {
+    adapter = marketplaceRegistry.bbdaily;
+    sourceSite = 'bbdaily';
+  } else if (lower.includes('instamart')) {
+    adapter = marketplaceRegistry.instamart;
+    sourceSite = 'instamart';
+  } else if (lower.includes('myntra.')) {
+    adapter = marketplaceRegistry.myntra;
+    sourceSite = 'myntra';
+  } else if (lower.includes('nykaa.')) {
+    adapter = marketplaceRegistry.nykaa;
+    sourceSite = 'nykaa';
+  }
+  
   // Use adapter-specific extraction if available
   if (adapter && typeof adapter.extractSignature === 'function') {
     const sig = await adapter.extractSignature(url);
     if (sig) return sig;
   }
-  // Fallback basic signature
+  
+  // Enhanced fallback signature extraction
+  const canonicalName = deriveCanonicalNameFromUrl(url) || extractProductNameFromUrl(url) || 'Unknown Product';
+  const brand = extractBrandFromName(canonicalName);
+  const asin = parseAsinFromUrl(url);
+  const variant = parseVariantFromCanonicalName(canonicalName);
+  
   return {
-    sourceSite: 'unknown',
+    sourceSite,
     inputUrl: url,
-    canonicalName: 'Unknown Product',
-    variant: {},
+    canonicalName,
+    brand,
+    asin,
+    variant,
   };
 };
 
@@ -104,23 +132,116 @@ function parseAsinFromUrl(url: string): string | undefined {
 }
 
 /**
+ * Extract a brand name from the product name - typically the first meaningful word
+ */
+function extractBrandFromName(name: string): string | undefined {
+  if (!name) return undefined;
+  
+  const words = name.split(' ').filter(word => word.length > 2);
+  const knownBrands = [
+    'apple', 'samsung', 'oneplus', 'xiaomi', 'oppo', 'vivo', 'realme', 'nokia', 'motorola',
+    'dell', 'hp', 'lenovo', 'asus', 'acer', 'macbook', 'iphone', 'ipad',
+    'nike', 'adidas', 'puma', 'reebok', 'levis', 'zara', 'h&m', 'uniqlo',
+    'sony', 'bose', 'jbl', 'boat', 'noise', 'sennheiser',
+    'loreal', 'olay', 'nivea', 'lakme', 'maybelline', 'revlon'
+  ];
+  
+  for (const word of words) {
+    const lowerWord = word.toLowerCase();
+    if (knownBrands.includes(lowerWord)) {
+      return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+    }
+  }
+  
+  // If no known brand found, return first word as potential brand
+  return words[0]?.charAt(0).toUpperCase() + words[0]?.slice(1).toLowerCase();
+}
+
+/**
+ * Extract product name from URL path segments
+ */
+function extractProductNameFromUrl(url: string): string | undefined {
+  try {
+    const urlObj = new URL(url);
+    const pathname = urlObj.pathname;
+    
+    // For search URLs, try to extract from query parameters
+    if (pathname.includes('/search') || pathname.includes('/s')) {
+      const params = new URLSearchParams(urlObj.search);
+      const query = params.get('q') || params.get('query') || params.get('k');
+      if (query) {
+        return decodeURIComponent(query).replace(/[+\-_]/g, ' ').trim();
+      }
+    }
+    
+    // Extract from path segments
+    const segments = pathname.split('/').filter(Boolean);
+    for (const segment of segments) {
+      if (segment.length > 10 && segment.includes('-')) {
+        return decodeURIComponent(segment).replace(/[-_]/g, ' ').trim();
+      }
+    }
+    
+    return undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+/**
  * Derive variant information such as capacity and colour from a product name.
  */
 function parseVariantFromCanonicalName(name: string | undefined): Record<string, string> {
   const variant: Record<string, string> = {};
   if (!name) return variant;
-  const capacityMatch = name.match(/\b(\d+\s*(?:GB|TB))\b/i);
+  
+  // Storage capacity
+  const capacityMatch = name.match(/\b(\d+\s*(?:GB|TB|MB))\b/i);
   if (capacityMatch) {
     variant.capacity = capacityMatch[1].toUpperCase().replace(/\s+/g, '');
   }
-  const colours = ['blue','black','white','green','red','silver','gold','grey','gray','purple','pink','yellow','orange'];
-  for (const colour of colours) {
-    const re = new RegExp(`\\b${colour}\\b`, 'i');
-    if (re.test(name)) {
-      variant.color = colour.charAt(0).toUpperCase() + colour.slice(1);
+  
+  // RAM
+  const ramMatch = name.match(/\b(\d+\s*GB\s*RAM)\b/i);
+  if (ramMatch) {
+    variant.ram = ramMatch[1].toUpperCase().replace(/\s+/g, '');
+  }
+  
+  // Screen size
+  const sizeMatch = name.match(/\b(\d+(?:\.\d+)?\s*(?:inch|in))\b/i);
+  if (sizeMatch) {
+    variant.size = sizeMatch[1].toLowerCase().replace(/\s+/g, '');
+  }
+  
+  // Colors with more variations
+  const colors = [
+    'black', 'white', 'silver', 'gold', 'rose gold', 'space gray', 'space grey',
+    'blue', 'navy blue', 'sky blue', 'midnight blue', 'pacific blue',
+    'red', 'crimson', 'cherry', 'green', 'forest green', 'midnight green',
+    'purple', 'violet', 'pink', 'coral', 'yellow', 'orange', 'brown',
+    'titanium', 'graphite', 'starlight', 'alpine green', 'sierra blue'
+  ];
+  
+  for (const color of colors) {
+    const regex = new RegExp(`\\b${color.replace(/\s+/g, '\\s+')}\\b`, 'i');
+    if (regex.test(name)) {
+      variant.color = color.split(' ').map(word => 
+        word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+      ).join(' ');
       break;
     }
   }
+  
+  // Size for clothing
+  const clothingSizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '28', '30', '32', '34', '36', '38', '40', '42'];
+  for (const size of clothingSizes) {
+    const regex = new RegExp(`\\b${size}\\b`, 'i');
+    if (regex.test(name)) {
+      variant.size = size.toUpperCase();
+      break;
+    }
+  }
+  
   return variant;
 }
 
