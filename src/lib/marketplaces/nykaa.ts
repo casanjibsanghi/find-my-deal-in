@@ -22,7 +22,8 @@ export class NykaaAdapter implements MarketplaceAdapter {
       return null;
     }
 
-    const basePrice = this.generateRealisticPrice(signature);
+    // Use actual extracted price if available, otherwise generate realistic price
+    const basePrice = signature.originalPrice || this.generateRealisticPrice(signature);
     const variation = Math.floor(Math.random() * 400) - 200;
     
     return {

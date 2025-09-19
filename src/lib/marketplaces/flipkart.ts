@@ -19,8 +19,9 @@ export class FlipkartAdapter implements MarketplaceAdapter {
   }
 
   async fetchOffer(url: string, signature: ProductSignature): Promise<OfferResult | null> {
-    const basePrice = this.generateRealisticPrice(signature);
-    const variation = Math.floor(Math.random() * 3000) - 1500; // ±1500 variation
+    // Use actual extracted price if available, otherwise generate realistic price
+    const basePrice = signature.originalPrice || this.generateRealisticPrice(signature);
+    const variation = Math.floor(Math.random() * 800) - 400; // ±400 variation from original price
     
     return {
       marketplace: this.displayName,

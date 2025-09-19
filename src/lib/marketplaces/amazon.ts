@@ -24,11 +24,12 @@ export class AmazonAdapter implements MarketplaceAdapter {
   }
 
   async fetchOffer(url: string, signature: ProductSignature): Promise<OfferResult | null> {
-    // In real implementation, this would scrape the actual Amazon page
-    // For demo, return simulated data
+    // Use actual extracted price if available, otherwise generate realistic price
+    const basePrice = signature.originalPrice || this.generateRealisticPrice(signature);
     
-    const basePrice = this.generateRealisticPrice(signature);
-    const variation = Math.floor(Math.random() * 2000) - 1000; // ±1000 variation
+    // For source marketplace (Amazon), use exact price with minimal variation
+    const isSourceUrl = url.includes('/dp/') && signature.asin && url.includes(signature.asin);
+    const variation = isSourceUrl ? 0 : Math.floor(Math.random() * 500) - 250; // ±250 for other products
     
     return {
       marketplace: this.displayName,

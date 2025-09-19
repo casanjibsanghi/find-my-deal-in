@@ -18,8 +18,9 @@ export class MeeshoAdapter implements MarketplaceAdapter {
   }
 
   async fetchOffer(url: string, signature: ProductSignature): Promise<OfferResult | null> {
-    const basePrice = this.generateRealisticPrice(signature);
-    const variation = Math.floor(Math.random() * 2000) - 1000;
+    // Use actual extracted price if available, otherwise generate realistic price
+    const basePrice = signature.originalPrice || this.generateRealisticPrice(signature);
+    const variation = Math.floor(Math.random() * 600) - 300; // ±300 variation from original price
     
     return {
       marketplace: this.displayName,

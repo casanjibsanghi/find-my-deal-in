@@ -22,8 +22,9 @@ export class MyntraAdapter implements MarketplaceAdapter {
       return null;
     }
 
-    const basePrice = this.generateRealisticPrice(signature);
-    const variation = Math.floor(Math.random() * 1000) - 500;
+    // Use actual extracted price if available, otherwise generate realistic price
+    const basePrice = signature.originalPrice || this.generateRealisticPrice(signature);
+    const variation = Math.floor(Math.random() * 700) - 350; // ±350 variation from original price
     
     return {
       marketplace: this.displayName,
