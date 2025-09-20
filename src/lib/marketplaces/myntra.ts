@@ -22,9 +22,16 @@ export class MyntraAdapter implements MarketplaceAdapter {
       return null;
     }
 
-    // Use actual extracted price if available, otherwise generate realistic price
-    const basePrice = signature.originalPrice || this.generateRealisticPrice(signature);
-    const variation = Math.floor(Math.random() * 700) - 350; // ±350 variation from original price
+    // Prioritize AI-extracted price for fashion items
+    let basePrice: number;
+    if (signature.originalPrice && signature.originalPrice > 0) {
+      basePrice = signature.originalPrice;
+    } else {
+      basePrice = this.generateRealisticPrice(signature);
+    }
+    
+    // Myntra typically has competitive pricing, ±₹200 variation
+    const variation = Math.floor(Math.random() * 400) - 200;
     
     return {
       marketplace: this.displayName,

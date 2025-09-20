@@ -22,9 +22,16 @@ export class NykaaAdapter implements MarketplaceAdapter {
       return null;
     }
 
-    // Use actual extracted price if available, otherwise generate realistic price
-    const basePrice = signature.originalPrice || this.generateRealisticPrice(signature);
-    const variation = Math.floor(Math.random() * 400) - 200;
+    // Prioritize AI-extracted price for beauty products
+    let basePrice: number;
+    if (signature.originalPrice && signature.originalPrice > 0) {
+      basePrice = signature.originalPrice;
+    } else {
+      basePrice = this.generateRealisticPrice(signature);
+    }
+    
+    // Nykaa typically competitive with small premium for authenticity, ±₹150 variation
+    const variation = Math.floor(Math.random() * 300) - 150;
     
     return {
       marketplace: this.displayName,

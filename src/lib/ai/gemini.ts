@@ -105,30 +105,49 @@ Be precise and extract only confirmed information. Return valid JSON only.`;
   }
 }
 
-/**
- * Fetch and parse product page content
- */
 export async function fetchProductPage(url: string): Promise<string | null> {
   try {
-    // Add user agent to avoid blocking
-    const response = await fetch(url, {
+    console.log('Fetching product page:', url);
+    
+    // For development/demo, we'll use a CORS proxy for external requests
+    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+    
+    const response = await fetch(proxyUrl, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-        'Accept-Language': 'en-US,en;q=0.5',
-        'Accept-Encoding': 'gzip, deflate, br',
-        'Connection': 'keep-alive',
-        'Upgrade-Insecure-Requests': '1',
+        'Accept': 'application/json',
       },
     });
 
     if (!response.ok) {
+      console.error(`Fetch failed: ${response.status} ${response.statusText}`);
       throw new Error(`HTTP ${response.status}: ${response.statusText}`);
     }
 
-    return await response.text();
+    const data = await response.json();
+    console.log('Successfully fetched page content');
+    return data.contents || null;
   } catch (error) {
     console.error('Error fetching product page:', error);
+    
+    // Fallback: try direct fetch (might work in some environments)
+    try {
+      console.log('Trying direct fetch as fallback...');
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (compatible; PriceBot/1.0)',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        },
+      });
+      
+      if (response.ok) {
+        console.log('Direct fetch succeeded');
+        return await response.text();
+      }
+    } catch (fallbackError) {
+      console.error('Direct fetch also failed:', fallbackError);
+    }
+    
     return null;
   }
 }

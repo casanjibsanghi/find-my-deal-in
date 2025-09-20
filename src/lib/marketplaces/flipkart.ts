@@ -19,9 +19,18 @@ export class FlipkartAdapter implements MarketplaceAdapter {
   }
 
   async fetchOffer(url: string, signature: ProductSignature): Promise<OfferResult | null> {
-    // Use actual extracted price if available, otherwise generate realistic price
-    const basePrice = signature.originalPrice || this.generateRealisticPrice(signature);
-    const variation = Math.floor(Math.random() * 800) - 400; // ±400 variation from original price
+    // Prioritize AI-extracted price, fallback to realistic generation
+    let basePrice: number;
+    if (signature.originalPrice && signature.originalPrice > 0) {
+      console.log(`Flipkart using AI-extracted price: ₹${signature.originalPrice}`);
+      basePrice = signature.originalPrice;
+    } else {
+      basePrice = this.generateRealisticPrice(signature);
+      console.log(`Flipkart using generated price: ₹${basePrice}`);
+    }
+    
+    // Flipkart typically slightly lower than Amazon, ±₹150 variation
+    const variation = Math.floor(Math.random() * 300) - 150;
     
     return {
       marketplace: this.displayName,

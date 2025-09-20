@@ -22,9 +22,16 @@ export class InstamartAdapter implements MarketplaceAdapter {
       return null;
     }
 
-    // Use actual extracted price if available, otherwise generate realistic price
-    const basePrice = signature.originalPrice || this.generateRealisticPrice(signature);
-    const variation = Math.floor(Math.random() * 60) - 30;
+    // Prioritize AI-extracted price for grocery products
+    let basePrice: number;
+    if (signature.originalPrice && signature.originalPrice > 0) {
+      basePrice = signature.originalPrice;  
+    } else {
+      basePrice = this.generateRealisticPrice(signature);
+    }
+    
+    // Instamart similar to Zepto, ±₹25 variation
+    const variation = Math.floor(Math.random() * 50) - 25;
     
     return {
       marketplace: this.displayName,

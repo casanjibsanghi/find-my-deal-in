@@ -24,12 +24,19 @@ export class AmazonAdapter implements MarketplaceAdapter {
   }
 
   async fetchOffer(url: string, signature: ProductSignature): Promise<OfferResult | null> {
-    // Use actual extracted price if available, otherwise generate realistic price
-    const basePrice = signature.originalPrice || this.generateRealisticPrice(signature);
+    // Prioritize AI-extracted price, fallback to realistic generation
+    let basePrice: number;
+    if (signature.originalPrice && signature.originalPrice > 0) {
+      console.log(`Using AI-extracted price: ₹${signature.originalPrice} for ${signature.canonicalName}`);
+      basePrice = signature.originalPrice;
+    } else {
+      basePrice = this.generateRealisticPrice(signature);
+      console.log(`Using generated price: ₹${basePrice} for ${signature.canonicalName}`);
+    }
     
     // For source marketplace (Amazon), use exact price with minimal variation
     const isSourceUrl = url.includes('/dp/') && signature.asin && url.includes(signature.asin);
-    const variation = isSourceUrl ? 0 : Math.floor(Math.random() * 500) - 250; // ±250 for other products
+    const variation = isSourceUrl ? 0 : Math.floor(Math.random() * 200) - 100; // ±₹100 for other products
     
     return {
       marketplace: this.displayName,

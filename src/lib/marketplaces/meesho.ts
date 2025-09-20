@@ -18,9 +18,43 @@ export class MeeshoAdapter implements MarketplaceAdapter {
   }
 
   async fetchOffer(url: string, signature: ProductSignature): Promise<OfferResult | null> {
-    // Use actual extracted price if available, otherwise generate realistic price
+    // Meesho focuses on budget items - check if product fits their catalog
+    if (signature.originalPrice && signature.originalPrice > 0) {
+      // For expensive items (>₹5000), Meesho likely won't have them or will have different variants
+      if (signature.originalPrice > 5000) {
+        // 70% chance of not having the product, 30% chance of budget alternative
+        if (Math.random() > 0.3) return null;
+        
+        // Budget alternative - significantly lower price (30-60% of original)
+        const budgetFactor = 0.3 + Math.random() * 0.3; // 30-60%
+        const basePrice = Math.floor(signature.originalPrice * budgetFactor);
+        const variation = Math.floor(Math.random() * 200) - 100; // ±₹100
+        
+        return {
+          marketplace: this.displayName,
+          marketplaceSlug: this.site,
+          productUrl: `${this.baseUrl}/search?q=${encodeURIComponent(signature.canonicalName)}`,
+          productTitle: `${signature.canonicalName} - Budget Alternative`,
+          variant: this.formatVariant(signature.variant),
+          listedPrice: basePrice + variation,
+          shippingFee: Math.random() > 0.6 ? 50 : 0,
+          effectivePrice: basePrice + variation + (Math.random() > 0.6 ? 50 : 0),
+          currency: 'INR',
+          inStock: Math.random() > 0.2,
+          offerNotes: ['Budget alternative', ...this.generateOfferNotes()],
+          deliveryEta: this.generateETA(),
+          matchConfidence: 0.65, // Lower confidence for alternatives
+          lastCheckedISO: new Date().toISOString(),
+          categories: ['Fashion', 'Electronics'],
+        };
+      }
+    }
+    
+    // For affordable items or fallback, use competitive pricing
     const basePrice = signature.originalPrice || this.generateRealisticPrice(signature);
-    const variation = Math.floor(Math.random() * 600) - 300; // ±300 variation from original price
+    const variation = signature.originalPrice && signature.originalPrice <= 5000 ? 
+      Math.floor(Math.random() * 300) - 200 : // Small discount for affordable items
+      Math.floor(Math.random() * 200) - 100; // Default variation
     
     return {
       marketplace: this.displayName,

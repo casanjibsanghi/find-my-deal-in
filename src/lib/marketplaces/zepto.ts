@@ -24,9 +24,16 @@ export class ZeptoAdapter implements MarketplaceAdapter {
       return null;
     }
 
-    // Use actual extracted price if available, otherwise generate realistic price
-    const basePrice = signature.originalPrice || this.generateRealisticPrice(signature);
-    const variation = Math.floor(Math.random() * 100) - 50; // Small variation for groceries
+    // Prioritize AI-extracted price for grocery products
+    let basePrice: number;
+    if (signature.originalPrice && signature.originalPrice > 0) {
+      basePrice = signature.originalPrice;
+    } else {
+      basePrice = this.generateRealisticPrice(signature);
+    }
+    
+    // Zepto typically has small markup for convenience, ±₹20 variation
+    const variation = Math.floor(Math.random() * 40) - 20;
     
     return {
       marketplace: this.displayName,
